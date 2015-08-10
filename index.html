@@ -10,10 +10,6 @@
 <script src="//code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
 <script type="text/javascript" src="//maps.google.com/maps/api/js?libraries=weather&sensor=false"></script>
 
-<link rel="shortcut icon" href="./phonesensor.jpg" type="image/jpg" />
-<link rel="icon" href="./phonesensor.jpg" type="image/jpg" />
-<link href="./phonesensor.jpg" rel="apple-touch-icon" />
-
 <script src="./mqttws31.js"></script>
 
 <meta property="og:title" content="Quickstart Publisher"/>
@@ -44,6 +40,7 @@ var lng = null;
 var ac = null;
 var acg = null;
 var rot = null;
+var ori = null;
 $(function(){
 	getDeviceId();
 
@@ -64,7 +61,12 @@ $(function(){
 	google.maps.event.addListener( map, 'zoom_changed', function(){
 	});
 	
-    window.addEventListener( "devicemotion", deviceMotion );
+	if( window.DeviceMotionEvent ){
+	    window.addEventListener( "devicemotion", deviceMotion );
+	}
+	if( window.DeviceOrientationEvent ){
+	    window.addEventListener( "deviceorientation", deviceOrientation );
+	}
  
 	$('#frm').submit( function(){
 		deviceid = $('#deviceid').val();
@@ -108,6 +110,21 @@ function deviceMotion( e ) {
 	publishMessage();
 }
 
+function deviceOrientation( e ) {
+	//e.preventDefault();
+	//console.log( e );
+	
+	var tiltLR = e.gamma;
+	var tiltFB = e.beta;
+	var dir = e.alpha;
+	ori = {};
+	ori['tiltLR'] = tiltLR;
+	ori['tiltFB'] = tiltFB;
+	ori['dir'] = dir;
+	
+	publishMessage();
+}
+
 function publishMessage(){
 	if( deviceid != null ){
 		var d = {};
@@ -136,6 +153,12 @@ function publishMessage(){
 			$('#rot_a').html( rot['alpha'] );
 			$('#rot_b').html( rot['beta'] );
 			$('#rot_g').html( rot['gamma'] );
+		}
+		if( ori != null ){
+			d['ori'] = ori;
+			$('#ori_lr').html( ori['tiltLR'] );
+			$('#ori_fb').html( ori['tiltFB'] );
+			$('#ori_dir').html( ori['dir'] );
 		}
 		
 		if( d ){
@@ -252,6 +275,9 @@ function generateDeviceId(){
     <tr><td>Rotate.A</td><td id="rot_a">&nbsp;</td></tr>
     <tr><td>Rotate.B</td><td id="rot_b">&nbsp;</td></tr>
     <tr><td>Rotate.G</td><td id="rot_g">&nbsp;</td></tr>
+    <tr><td>Orientation.LR</td><td id="ori_lr">&nbsp;</td></tr>
+    <tr><td>Orientation.FB</td><td id="ori_fb">&nbsp;</td></tr>
+    <tr><td>Orientation.DIR</td><td id="ori_dir">&nbsp;</td></tr>
    </tbody>
   </table>
  </div>
