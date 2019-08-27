@@ -183,7 +183,7 @@ phoneData.toJson = function(){
 }
 
 phoneData.publish = function(){
-	var message = new Paho.MQTT.Message( phoneData.toJson() );
+	var message = new Messaging.Message( phoneData.toJson() );
 	message.destinationName = pubTopic;
 	client.send( message );
 }
