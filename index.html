@@ -74,12 +74,8 @@ $(function(){
 		lat = position.coords.latitude;
 		lng = position.coords.longitude;
 
-		var pos = new google.maps.LatLng( lat, lng );
-		marker = new google.maps.Marker( {
-				position: pos,
-				map: map
-		});
-		map.panTo( pos );
+		marker = L.marker( [ lat, lng ] ).addTo( map );
+		map.panTo( new L.LatLng( lat, lng ) );
 
 		publishMessage();
 	});
