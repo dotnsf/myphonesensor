@@ -8,19 +8,19 @@
 <script src="//code.jquery.com/jquery-2.0.3.min.js"></script>
 <link rel="stylesheet" href="//code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" />
 <script src="//code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
-<script type="text/javascript" src="//maps.google.com/maps/api/js?libraries=weather&sensor=false"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js"></script>
 
-<script src="./mqttws31.js"></script>
+<script src="/mqttws31.js"></script>
 
 <meta property="og:title" content="Quickstart Publisher"/>
 <meta property="og:type" content="website"/>
-<meta property="og:url" content="http://dotnsf-phonesensor.mybluemix.net/"/>
-<meta property="og:image" content="http://dotnsf-phonesensor.mybluemix.net/phonesensor.jpg"/>
+<meta property="og:url" content="//dotnsf-phonesensor.mybluemix.net/"/>
+<meta property="og:image" content="//dotnsf-phonesensor.mybluemix.net/phonesensor.jpg"/>
 <meta property="og:site_name" content="My PhoneSensor"/>
-<meta property="og:description" content="IBM IoTF QuickStart にスマホのジャイロ情報をパブリッシュするサービス"/>
+<meta property="og:description" content="IBM Watson IoT QuickStart にスマホのジャイロ情報をパブリッシュするサービス"/>
 
-<meta name="description" content="IBM IoTF QuickStart にスマホのジャイロ情報をパブリッシュするサービス"/>
-<meta name="keywords" content="IBM, Bluemix, IoT, QuickStart"/>
+<meta name="description" content="IBM Watson IoT QuickStart にスマホのジャイロ情報をパブリッシュするサービス"/>
+<meta name="keywords" content="IBM, IBM Cloud, Bluemix, IoT, QuickStart"/>
 
 <script type="text/javascript">
 var map = null;
@@ -44,30 +44,21 @@ var ori = null;
 $(function(){
 	getDeviceId();
 
-	var mapdiv = document.getElementById( "map_canvas" );
-	var myOptions = {
-		zoom: 13,
-		center: new google.maps.LatLng( 35.659, 139.702 ),
-		mapTypeId: google.maps.MapTypeId.ROADMAP,
-		scaleControl: true
-	};
-	map = new google.maps.Map( mapdiv, myOptions );
-	map.panTo( new google.maps.LatLng( 35.659, 139.702 ) );
-		
-	google.maps.event.addListener( map, 'dragstart', function(){
-	});
-	google.maps.event.addListener( map, 'dragend', function(){
-	});
-	google.maps.event.addListener( map, 'zoom_changed', function(){
-	});
-	
+	map = L.map( 'map_canvas', { dragging: false, zoomControl: false, minZoom: 15, maxZoom: 15 } ).setView( [ lat, lng ], 15 );
+	L.tileLayer(
+		'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org/">OpenStreetMap</a>',
+			maxZoom: 15
+		}
+	).addTo( map );
+
 	if( window.DeviceMotionEvent ){
 	    window.addEventListener( "devicemotion", deviceMotion );
 	}
 	if( window.DeviceOrientationEvent ){
 	    window.addEventListener( "deviceorientation", deviceOrientation );
 	}
- 
+
 	$('#frm').submit( function(){
 		deviceid = $('#deviceid').val();
 		devicetype = $('#devicetype').val();
@@ -75,7 +66,7 @@ $(function(){
 
 		return false;
 	});
-	
+
 	navigator.geolocation.getCurrentPosition( function( position ){
 		//console.log( position.coords );
 		lat = position.coords.latitude;
@@ -87,33 +78,32 @@ $(function(){
 				map: map
 		});
 		map.panTo( pos );
-	
+
 		publishMessage();
 	});
-	
+
 	var clientID = "d:quickstart:" + devicetype + ":" + deviceid;
 	console.log( "clientID=" + clientID );
-	client = new Paho.MQTT.Client("ws://quickstart.messaging.internetofthings.ibmcloud.com:1883/", clientID );
+	client = new Messaging.Client("quickstart.messaging.internetofthings.ibmcloud.com", 443, clientID );
 	client.onConnectionLost = onConnectionLost;
-	client.connect({onSuccess: onConnect,
-								onFailure: onConnectFailure});
+	client.connect({onSuccess: onConnect, onFailure: onConnectFailure, useSSL: true});
 });
 
 function deviceMotion( e ) {
 	e.preventDefault();
 	//console.log( e );
-	
+
 	ac = e.acceleration;
 	acg = e.accelerationIncludingGravity;
 	rot = e.rotationRate;
-	
+
 	publishMessage();
 }
 
 function deviceOrientation( e ) {
 	//e.preventDefault();
 	//console.log( e );
-	
+
 	var tiltLR = e.gamma;
 	var tiltFB = e.beta;
 	var dir = e.alpha;
@@ -121,7 +111,7 @@ function deviceOrientation( e ) {
 	ori['tiltLR'] = tiltLR;
 	ori['tiltFB'] = tiltFB;
 	ori['dir'] = dir;
-	
+
 	publishMessage();
 }
 
@@ -160,7 +150,7 @@ function publishMessage(){
 			$('#ori_fb').html( ori['tiltFB'] );
 			$('#ori_dir').html( ori['dir'] );
 		}
-		
+
 		if( d ){
 			phoneData.d = d;
 			phoneData.publish();
@@ -210,7 +200,7 @@ function getDeviceId(){
 			did = unescape( unescape( str[1] ) );
 		}
 	}
-	
+
 	if( did != null ){
 		deviceid = did;
 	}else{
@@ -230,10 +220,10 @@ function generateDeviceId(){
 		c = hx.charAt( n );
 		did += c;
 	}
-	
+
 	var str = "deviceid=" + did;
 	document.cookie = str;
-	
+
 	return did;
 }
 </script>
@@ -246,7 +236,7 @@ function generateDeviceId(){
   <a href="#debugpage" data-role="button" class="ui-btn-left" data-transition="flip" data-theme="b">Debug</a>
   <h1 id="deviceid">************</h1>
  </div>
- 
+
  <div data-role="content">
   <div id="map_canvas" style="width:100%;height:400px"></div>
  </div>
@@ -257,7 +247,7 @@ function generateDeviceId(){
   <a href="#page0" data-role="button" class="ui-btn-left" data-transition="flip" data-theme="b">Back</a>
   <h1 id="deviceid">Debug</h1>
  </div>
- 
+
  <div data-role="content">
   <table border="1" cellspacing="0" data-theme="c" width="100%">
    <thead>
